@@ -4,7 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
 <title>Make a Birthday Wish 🎂</title>
+<script>
+  if(new URLSearchParams(location.search).has('wish')){
+    document.documentElement.classList.add('shared-loading');
+  }
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+<link rel="modulepreload" href="https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js">
+<link rel="modulepreload" href="https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js">
 <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
@@ -144,6 +152,12 @@
     transform:rotate(-1deg);
   }
   .hide{display:none !important;}
+  .shared-loading #creatorView{display:none !important;}
+  .shared-loading #revealView{display:block !important;}
+  .shared-loading #surpriseGate{display:flex !important;}
+  .shared-loading #revealCard{display:none !important;}
+  .loading-dots::after{content:'...';display:inline-block;width:1.4em;text-align:left;animation:loadingDots 1.1s steps(4,end) infinite;}
+  @keyframes loadingDots{0%{clip-path:inset(0 100% 0 0)}100%{clip-path:inset(0 0 0 0)}}
 
   /* ---------- form ---------- */
   label{
@@ -348,9 +362,13 @@
     box-shadow:0 10px 25px rgba(92,46,31,.24);animation:pop .65s cubic-bezier(.26,1.5,.5,1);
   }
   .reveal-collage img{width:100%;height:100%;min-width:0;min-height:0;object-fit:cover;border-radius:12px;}
-  .reveal-collage.mosaic{grid-template-columns:1.35fr 1fr;grid-template-rows:1fr 1fr;}
-  .reveal-collage.mosaic img:first-child{grid-row:1 / 3;}
-  .reveal-collage.mosaic img:only-child{grid-column:1 / 3;grid-row:1 / 3;}
+  .reveal-collage.mosaic.count-1{grid-template-columns:1fr;grid-template-rows:1fr;}
+  .reveal-collage.mosaic.count-2{grid-template-columns:1fr 1fr;grid-template-rows:1fr;}
+  .reveal-collage.mosaic.count-3{grid-template-columns:1.35fr 1fr;grid-template-rows:1fr 1fr;}
+  .reveal-collage.mosaic.count-3 img:first-child{grid-row:1 / 3;}
+  .reveal-collage.mosaic.count-4{grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;}
+  .reveal-collage.mosaic.count-5{grid-template-columns:1.3fr 1fr 1fr;grid-template-rows:1fr 1fr;}
+  .reveal-collage.mosaic.count-5 img:first-child{grid-row:1 / 3;}
   .reveal-collage.polaroid{display:flex;align-items:center;justify-content:center;overflow:visible;background:linear-gradient(135deg,#fff9f2,#f8e4d1);padding:22px 12px;}
   .reveal-collage.polaroid img{width:31%;height:78%;border:7px solid #fff;border-bottom-width:20px;border-radius:3px;box-shadow:0 8px 15px rgba(67,36,22,.22);transform:rotate(-5deg);margin:-8px;}
   .reveal-collage.polaroid img:nth-child(even){transform:rotate(5deg) translateY(9px)}
@@ -360,6 +378,9 @@
   .reveal-collage.film::before{top:6px}.reveal-collage.film::after{bottom:6px}
   .reveal-collage.film img{flex:1;width:0;border-radius:4px;}
   .reveal-collage.empty{display:flex;align-items:center;justify-content:center;background:var(--skin-light);font-size:4rem;}
+  .reveal-collage img{animation:memoryArrive .65s cubic-bezier(.2,1.2,.3,1) both;}
+  .reveal-collage img:nth-child(2){animation-delay:.1s}.reveal-collage img:nth-child(3){animation-delay:.2s}.reveal-collage img:nth-child(4){animation-delay:.3s}.reveal-collage img:nth-child(5){animation-delay:.4s}
+  @keyframes memoryArrive{from{opacity:0;transform:translateY(20px) scale(.8) rotate(-3deg)}}
   @keyframes pop{
     0%{transform:scale(0); opacity:0;}
     70%{transform:scale(1.12);}
@@ -402,6 +423,8 @@
   .gift-showcase .msg b{color:var(--maroon); font-family:'Caveat',cursive; font-size:1.25rem;}
   .personal-note{margin:16px 0 0;padding:16px 18px;background:#fffaf4;border-left:4px solid var(--coral);border-radius:6px 16px 16px 6px;text-align:left;color:var(--ink);font-family:'Caveat',cursive;font-size:1.35rem;line-height:1.25;box-shadow:0 7px 15px rgba(92,46,31,.08);}
   .personal-note::before{content:'A little note for you ✨';display:block;font:700 .68rem 'Quicksand',sans-serif;text-transform:uppercase;letter-spacing:1px;color:var(--coral);margin-bottom:7px;}
+  .memory-reel-btn{margin:14px auto 0;border:2px solid var(--gold);background:#fff;color:var(--maroon);border-radius:24px;padding:10px 17px;font:700 .8rem 'Quicksand',sans-serif;cursor:pointer;box-shadow:0 6px 15px rgba(92,46,31,.12);}
+  .photo-count{font-size:.78rem;color:var(--skin-deep);font-weight:700;margin-top:7px;}
   .reveal-actions{
     margin-top:24px;
     display:flex;
@@ -446,6 +469,7 @@
     font-size:4.7rem;animation:giftFloat 2.3s ease-in-out infinite;
   }
   .open-gift:hover{filter:brightness(1.06);}
+  .open-gift:disabled{cursor:wait;filter:saturate(.75);}
   @keyframes giftFloat{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-14px) rotate(3deg)}}
 
   .tap-sparkle{position:fixed;z-index:20;pointer-events:none;font-size:18px;animation:sparkAway .7s ease-out forwards;}
@@ -510,6 +534,7 @@
         <label class="upload-btn" for="photoInput">Choose photos</label>
         <input type="file" id="photoInput" accept="image/*" multiple>
       </div>
+      <div class="photo-count" id="photoCount">No photos selected yet — add them together or one at a time.</div>
       <label>Choose the collage style</label>
       <div class="collage-picker" id="collagePicker">
         <button type="button" class="layout-option selected" data-layout="mosaic"><span class="layout-icon mosaic"><i></i><i></i><i></i></span>Mosaic</button>
@@ -550,9 +575,9 @@
   <div id="revealView" class="hide">
     <div class="confetti-layer" id="confettiLayer"></div>
     <div class="surprise-gate hide" id="surpriseGate">
-      <button class="open-gift" id="openGiftBtn" aria-label="Open birthday surprise">🎁</button>
+      <button class="open-gift" id="openGiftBtn" aria-label="Open birthday surprise" disabled>🎁</button>
       <h2>A surprise is waiting!</h2>
-      <p>Tap the gift to unwrap your birthday wish</p>
+      <p><span id="gateReadyText">Getting your surprise ready</span><span class="loading-dots" id="gateLoadingDots"></span></p>
     </div>
     <div class="reveal-card" id="revealCard">
       <div class="reveal-collage mosaic" id="revealPhoto"></div>
@@ -564,6 +589,7 @@
         <div class="msg" id="revealGiftMsg"></div>
       </div>
       <div class="personal-note hide" id="personalNote"></div>
+      <button class="memory-reel-btn hide" id="memoryReelBtn" type="button">▶ Play the memory reel</button>
 
       <div class="reveal-actions" id="ownerActions">
         <button class="action-btn download" id="downloadBtn">⬇ Save as image</button>
@@ -721,20 +747,29 @@ function compressPhoto(file){
   });
 }
 function showPhotoPreview(){
-  if(!state.photos.length){photoPreview.classList.remove('mini-collage');defaultAvatar(photoPreview);return;}
+  const count=document.getElementById('photoCount');
+  if(!state.photos.length){
+    photoPreview.classList.remove('mini-collage');defaultAvatar(photoPreview);
+    count.textContent='No photos selected yet — add them together or one at a time.';
+    return;
+  }
   photoPreview.classList.add('mini-collage');
   photoPreview.innerHTML=state.photos.map(src=>`<img src="${src}" alt="Selected photo">`).join('');
+  count.textContent=`${state.photos.length} of 5 photos added${state.photos.length<5?' — click “Add more photos” to continue.':' — collage ready!'}`;
 }
 document.getElementById('photoInput').addEventListener('change', async function(e){
-  const files=[...e.target.files].slice(0,5);
+  const room=5-state.photos.length;
+  const files=[...e.target.files].slice(0,room);
   if(!files.length)return;
   const label=document.querySelector('label[for="photoInput"]');
   const oldText=label.textContent;
   label.textContent='Preparing photos…';
   try{
-    state.photos=await Promise.all(files.map(compressPhoto));
+    const newPhotos=await Promise.all(files.map(compressPhoto));
+    state.photos=[...state.photos,...newPhotos].slice(0,5);
     showPhotoPreview();
-    label.textContent=`${state.photos.length} photo${state.photos.length===1?'':'s'} selected`;
+    label.textContent=state.photos.length<5?'Add more photos':`${state.photos.length} photos selected`;
+    e.target.value='';
   }catch(error){
     label.textContent=oldText;
     document.getElementById('step1Err').textContent='One of those photos could not be opened. Try another image.';
@@ -874,7 +909,7 @@ function renderReveal(data, isOwner){
 
   const visual=getVisualData(data);
   const photoBox = document.getElementById('revealPhoto');
-  photoBox.className='reveal-collage '+(visual.layout||'mosaic');
+  photoBox.className='reveal-collage '+(visual.layout||'mosaic')+' count-'+Math.max(1,Math.min(5,visual.images.length));
   if(visual.images.length){
     photoBox.innerHTML=visual.images.slice(0,5).map((src,index)=>`<img src="${src}" alt="Birthday memory ${index+1}">`).join('');
   }else{
@@ -904,6 +939,9 @@ function renderReveal(data, isOwner){
   }else{
     personalNote.classList.add('hide');
   }
+  const reelButton=document.getElementById('memoryReelBtn');
+  reelButton.dataset.images=JSON.stringify(visual.images);
+  reelButton.classList.toggle('hide',visual.images.length<2);
 
   document.getElementById('ownerActions').style.display = isOwner ? 'flex' : 'none';
   if(isOwner){
@@ -913,13 +951,18 @@ function renderReveal(data, isOwner){
   }else{
     gate.classList.remove('hide');
     revealCard.classList.add('waiting');
-    document.getElementById('openGiftBtn').onclick = ()=>{
+    const openButton=document.getElementById('openGiftBtn');
+    openButton.disabled=false;
+    document.getElementById('gateReadyText').textContent='Tap the gift to unwrap your birthday wish';
+    document.getElementById('gateLoadingDots').classList.add('hide');
+    openButton.onclick = ()=>{
       gate.classList.add('hide');
       revealCard.classList.remove('waiting');
       revealCard.classList.add('opened');
       launchConfetti();
     };
   }
+  document.documentElement.classList.remove('shared-loading');
 }
 
 document.addEventListener('pointerdown', event=>{
@@ -933,13 +976,33 @@ document.addEventListener('pointerdown', event=>{
   setTimeout(()=>sparkle.remove(), 750);
 });
 
+let memoryReelTimer=null;
 document.getElementById('revealPhoto').addEventListener('click',event=>{
   if(event.target.tagName!=='IMG')return;
   document.getElementById('lightboxImage').src=event.target.src;
   document.getElementById('memoryLightbox').classList.remove('hide');
 });
 document.getElementById('memoryLightbox').addEventListener('click',event=>{
+  clearInterval(memoryReelTimer);
   event.currentTarget.classList.add('hide');
+});
+document.getElementById('memoryReelBtn').addEventListener('click',event=>{
+  const images=JSON.parse(event.currentTarget.dataset.images||'[]');
+  if(images.length<2)return;
+  let index=0;
+  const lightbox=document.getElementById('memoryLightbox');
+  const image=document.getElementById('lightboxImage');
+  image.src=images[index];
+  lightbox.classList.remove('hide');
+  clearInterval(memoryReelTimer);
+  memoryReelTimer=setInterval(()=>{
+    index=(index+1)%images.length;
+    image.style.animation='none';
+    requestAnimationFrame(()=>{
+      image.src=images[index];
+      image.style.animation='photoZoom .4s cubic-bezier(.2,1,.25,1) both';
+    });
+  },1800);
 });
 
 /* ================= OWNER ACTIONS ================= */
@@ -982,6 +1045,7 @@ document.getElementById('againBtn').addEventListener('click', ()=>{
     }catch(error){
       console.error(error);
     }
+    document.documentElement.classList.remove('shared-loading');
   }
 
   const hash = location.hash;
